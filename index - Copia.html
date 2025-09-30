@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Planner Semanal - By Erique Melo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #111827;
+  }
+
+  ::selection {
+    background-color: #ef4444;
+    color: #fff;
+  }
+  
+  .title-gradient {
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      background-image: linear-gradient(to right, #ef4444, #f43f5e);
+      text-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+  }
+
+  .glass {
+    background: linear-gradient(135deg, rgba(30, 20, 20, 0.2), rgba(30, 20, 20, 0.1));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .btn {
+    background: rgba(40, 29, 29, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all .2s ease;
+    border-radius: 10px;
+  }
+  .btn:hover {
+    background: rgba(50, 39, 39, 0.7);
+    transform: translateY(-2px);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    background: rgba(40, 29, 29, 0.3);
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .btn-primary {
+    background: linear-gradient(to right, #ef4444, #f43f5e);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.25);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.35);
+    transform: translateY(-2px);
+  }
+
+  .day-col { height: 65vh; }
+  @media (max-width:768px){ .day-col{ height: 55vh; } }
+  .thin-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+  .thin-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 6px; }
+
+  /* Drag & Drop */
+  .grabbable { cursor: grab; }
+  .grabbable:active { cursor: grabbing; }
+  .drop-target {
+    outline: 2px dashed #ef4444;
+    outline-offset: -4px;
+    background: rgba(239, 68, 68, 0.1);
+  }
+  
+  /* Indicadores de Prioridade */
+  .pri-alta { border-left: 3px solid #ef4444; }
+  .pri-media { border-left: 3px solid #f59e0b; }
+  .pri-baixa { border-left: 3px solid #10b981; }
+
+  /* Formulários */
+  .inp {
+    background: rgb(31 41 55 / 0.6);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px;
+    transition: all .2s ease;
+  }
+  .inp:focus {
+    outline: none;
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  }
+  select.inp option { background: #1f2937; }
+
+  /* Modal */
+  .modal-backdrop { display: none; }
+  .modal-backdrop.show { display: flex; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  
+  /* Dia atual */
+  .current-day {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(30, 20, 20, 0.1));
+    border-color: rgba(239, 68, 68, 0.4) !important;
+  }
+</style>
+</head>
+<body class="text-zinc-100 min-h-screen" style="background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 38, 38, 0.15), transparent), linear-gradient(to right bottom, rgb(17, 24, 39), rgb(55, 22, 22), rgb(17, 24, 39));">
+  <div class="max-w-8xl mx-auto p-4 md:p-6 space-y-4">
+    <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-bold title-gradient">Planner Semanal</h1>
+        <p class="text-sm text-zinc-400 mt-2">
+          Organize suas tarefas e planeje sua semana com antecedência.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="prevWeekBtn" class="btn px-3 py-2"><i class="fas fa-chevron-left"></i> Anterior</button>
+        <button id="thisWeekBtn" class="btn px-3 py-2"><i class="fas fa-calendar-day"></i> Atual</button>
+        <button id="nextWeekBtn" class="btn px-3 py-2">Próxima <i class="fas fa-chevron-right"></i></button>
+      </div>
+    </header>
+
+    <section class="grid gap-3 md:grid-cols-3">
+      <div class="glass rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">Semana: <span id="weekLabel" class="text-zinc-300"></span></h2>
+          <span id="sundayStamp" class="text-xs text-zinc-400"></span>
+        </div>
+        <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <div class="bg-black/30 rounded-xl p-3">
+            <div class="text-zinc-400">Tarefas</div>
+            <div id="statTotal" class="text-xl font-semibold">0</div>
+          </div>
+          <div class="bg-black/30 rounded-xl p-3">
+            <div class="text-zinc-400">Concluídas</div>
+            <div id="statDone" class="text-xl font-semibold text-green-400">0</div>
+          </div>
+        </div>
+        <div id="perDayStats" class="mt-3 grid grid-cols-7 gap-2 text-xs"></div>
+      </div>
+
+      <form id="taskForm" class="glass rounded-2xl p-4 space-y-3">
+        <h2 class="font-semibold">Adicionar tarefa</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="col-span-2">
+            <label class="text-sm text-zinc-400">Título</label>
+            <input required id="fTitle" class="inp w-full mt-1 px-3 py-2" placeholder="Ex.: Estudar Pediatria (3 temas)"/>
+          </div>
+          <div>
+            <label class="text-sm text-zinc-400">Dia</label>
+            <select id="fDay" class="inp w-full mt-1 px-3 py-2">
+              <option value="0">Dom</option><option value="1">Seg</option><option value="2">Ter</option>
+              <option value="3">Qua</option><option value="4">Qui</option><option value="5">Sex</option><option value="6">Sáb</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-sm text-zinc-400">Início</label>
+              <input id="fStart" type="time" class="inp w-full mt-1 px-3 py-2"/>
+            </div>
+            <div>
+              <label class="text-sm text-zinc-400">Fim</label>
+              <input id="fEnd" type="time" class="inp w-full mt-1 px-3 py-2"/>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm text-zinc-400">Etiqueta</label>
+            <input id="fLabel" class="inp w-full mt-1 px-3 py-2" placeholder="Ex.: Estudos"/>
+          </div>
+          <div>
+            <label class="text-sm text-zinc-400">Prioridade</label>
+            <select id="fPriority" class="inp w-full mt-1 px-3 py-2">
+              <option value="Média">Média</option>
+              <option value="Alta">Alta</option>
+              <option value="Baixa">Baixa</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="text-sm text-zinc-400">Notas</label>
+            <textarea id="fNotes" rows="2" class="inp w-full mt-1 px-3 py-2" placeholder="Detalhes rápidos…"></textarea>
+          </div>
+          <div class="col-span-2 flex items-center justify-between">
+            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+              <input id="fTemplate" type="checkbox" class="accent-red-500">
+              <span>Salvar no Template</span>
+            </label>
+            <button class="btn btn-primary px-4 py-2 font-medium">Adicionar</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="glass rounded-2xl p-4 space-y-2">
+        <h2 class="font-semibold">Ações da Semana</h2>
+        <button id="generateFromTemplateBtn" class="btn w-full px-3 py-2">Gerar semana do Template</button>
+        <button id="copyCarryBtn" class="btn w-full px-3 py-2">Trazer pendentes da semana anterior</button>
+        <div class="h-px bg-white/10 my-2"></div>
+        <div class="flex gap-2">
+          <button id="exportBtn" class="btn flex-1 px-3 py-2">Exportar</button>
+          <label class="flex-1">
+            <input id="importFile" type="file" accept=".json" class="hidden">
+            <span class="btn w-full inline-block text-center px-3 py-2 cursor-pointer">Importar</span>
+          </label>
+        </div>
+        <button id="clearWeekBtn" class="btn w-full px-3 py-2 bg-red-800/40 hover:bg-red-800/60 border-red-500/30">Limpar semana</button>
+      </div>
+    </section>
+
+    <section id="weekGrid" class="grid grid-cols-1 md:grid-cols-7 gap-3">
+      <template id="dayColTpl">
+        <div class="glass rounded-2xl flex flex-col day-col">
+          <div class="p-3 border-b border-white/10">
+            <div class="flex items-baseline justify-between">
+              <h3 class="font-semibold"></h3>
+              <span class="text-xs text-zinc-400"></span>
+            </div>
+          </div>
+          <div class="flex-1 overflow-y-auto thin-scroll p-2" data-dropzone></div>
+        </div>
+      </template>
+
+      <template id="taskCardTpl">
+        <div class="grabbable select-none rounded-xl border border-white/10 bg-gray-800/50 p-3 text-sm flex flex-col gap-1" draggable="true">
+          <div class="flex items-start justify-between gap-2">
+            <div class="font-medium flex-1" data-title></div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <button data-edit title="Editar" class="text-zinc-400 hover:text-white transition-colors">✏️</button>
+              <button data-delete title="Excluir" class="text-zinc-400 hover:text-red-400 transition-colors">🗑️</button>
+            </div>
+          </div>
+          <div class="text-xs text-zinc-400 line-clamp-2" data-notes></div>
+          <div class="flex items-center justify-between text-xs text-zinc-300 mt-1">
+            <span data-time class="bg-black/30 px-1.5 py-0.5 rounded"></span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-black/30" data-label></span>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" data-done class="w-4 h-4 rounded accent-red-500 bg-white/10 border-white/20">
+              <span>feito</span>
+            </label>
+          </div>
+        </div>
+      </template>
+    </section>
+  </div>
+
+  <div id="editModal" class="modal-backdrop fixed inset-0 bg-black/70 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="glass w-full max-w-lg rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Editar tarefa</h3>
+        <button id="editCloseBtn" class="text-zinc-400 hover:text-white">✕</button>
+      </div>
+      <form id="editForm" class="space-y-4">
+        <input type="hidden" id="eId">
+        <div>
+          <label class="text-sm text-zinc-400">Título</label>
+          <input id="eTitle" class="inp w-full mt-1 px-3 py-2" required />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm text-zinc-400">Dia</label>
+            <select id="eDay" class="inp w-full mt-1 px-3 py-2">
+              <option value="0">Dom</option><option value="1">Seg</option><option value="2">Ter</option>
+              <option value="3">Qua</option><option value="4">Qui</option><option value="5">Sex</option><option value="6">Sáb</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-sm text-zinc-400">Início</label>
+              <input id="eStart" type="time" class="inp w-full mt-1 px-3 py-2"/>
+            </div>
+            <div>
+              <label class="text-sm text-zinc-400">Fim</label>
+              <input id="eEnd" type="time" class="inp w-full mt-1 px-3 py-2"/>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm text-zinc-400">Etiqueta</label>
+            <input id="eLabel" class="inp w-full mt-1 px-3 py-2"/>
+          </div>
+          <div>
+            <label class="text-sm text-zinc-400">Prioridade</label>
+            <select id="ePriority" class="inp w-full mt-1 px-3 py-2">
+              <option value="Média">Média</option>
+              <option value="Alta">Alta</option>
+              <option value="Baixa">Baixa</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-sm text-zinc-400">Notas</label>
+          <textarea id="eNotes" rows="3" class="inp w-full mt-1 px-3 py-2"></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" id="editCancelBtn" class="btn px-4 py-2">Cancelar</button>
+          <button class="btn btn-primary px-5 py-2 font-semibold">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  // ---------- O seu JavaScript original foi mantido aqui sem nenhuma alteração ----------
+  // ... (Todo o script original está aqui)
+  // ---------- Utilidades de data (domingo como início) ----------
+  function startOfWeek(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - day);
+    return d;
+  }
+  function addDays(date, n) { const d = new Date(date); d.setDate(d.getDate()+n); return d; }
+  function fmtDate(d) { return d.toISOString().slice(0,10); }
+  function fmtHuman(d) {
+    return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+  }
+  function weekKey(d){ return fmtDate(startOfWeek(d)); }
+
+  // ---------- Storage ----------
+  const LS_KEY = 'weeklyPlanner.v4.redGlass';
+  function loadState(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY)) ?? { weeks:{}, template:[] }; }
+    catch { return { weeks:{}, template:[] }; }
+  }
+  function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  let state = loadState();
+
+  // ---------- Estado de UI ----------
+  let currentSunday = startOfWeek(new Date());
+
+  // ---------- DOM refs ----------
+  const weekLabel = document.getElementById('weekLabel');
+  const sundayStamp = document.getElementById('sundayStamp');
+  const prevWeekBtn = document.getElementById('prevWeekBtn');
+  const nextWeekBtn = document.getElementById('nextWeekBtn');
+  const thisWeekBtn = document.getElementById('thisWeekBtn');
+
+  const taskForm = document.getElementById('taskForm');
+  const fTitle = document.getElementById('fTitle');
+  const fDay = document.getElementById('fDay');
+  const fStart = document.getElementById('fStart');
+  const fEnd = document.getElementById('fEnd');
+  const fLabel = document.getElementById('fLabel');
+  const fPriority = document.getElementById('fPriority');
+  const fNotes = document.getElementById('fNotes');
+  const fTemplate = document.getElementById('fTemplate');
+
+  const generateFromTemplateBtn = document.getElementById('generateFromTemplateBtn');
+  const copyCarryBtn = document.getElementById('copyCarryBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const importFile = document.getElementById('importFile');
+  const clearWeekBtn = document.getElementById('clearWeekBtn');
+
+  const dayColTpl = document.getElementById('dayColTpl');
+  const taskCardTpl = document.getElementById('taskCardTpl');
+  const weekGrid = document.getElementById('weekGrid');
+
+  const perDayStats = document.getElementById('perDayStats');
+  const statTotal = document.getElementById('statTotal');
+  const statDone = document.getElementById('statDone');
+
+  const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  // Modal edição
+  const editModal = document.getElementById('editModal');
+  const editForm = document.getElementById('editForm');
+  const eId = document.getElementById('eId');
+  const eTitle = document.getElementById('eTitle');
+  const eDay = document.getElementById('eDay');
+  const eStart = document.getElementById('eStart');
+  const eEnd = document.getElementById('eEnd');
+  const eLabel = document.getElementById('eLabel');
+  const ePriority = document.getElementById('ePriority');
+  const eNotes = document.getElementById('eNotes');
+  const editCloseBtn = document.getElementById('editCloseBtn');
+  const editCancelBtn = document.getElementById('editCancelBtn');
+
+  function openModal(){ editModal.classList.add('show'); }
+  function closeModal(){ editModal.classList.remove('show'); }
+  editCloseBtn.onclick = closeModal; editCancelBtn.onclick = closeModal;
+  editModal.addEventListener('click', (e)=>{ if(e.target===editModal) closeModal(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+
+  // ---------- Navegação de semana ----------
+  prevWeekBtn.onclick = () => { currentSunday = addDays(currentSunday,-7); render(); };
+  nextWeekBtn.onclick = () => { currentSunday = addDays(currentSunday, 7); render(); };
+  thisWeekBtn.onclick = () => { currentSunday = startOfWeek(new Date()); render(); };
+
+  // ---------- CRUD ----------
+  function getWeekTasks(k=weekKey(currentSunday)) {
+    if(!state.weeks[k]) state.weeks[k] = [];
+    return state.weeks[k];
+  }
+  function addTask(t) {
+    const arr = getWeekTasks();
+    arr.push(t);
+    saveState();
+    render();
+  }
+  function updateTask(id, patch) {
+    const arr = getWeekTasks();
+    const i = arr.findIndex(t=>t.id===id);
+    if(i>=0){ arr[i] = {...arr[i], ...patch}; saveState(); render(); }
+  }
+  function deleteTask(id) {
+    const k = weekKey(currentSunday);
+    state.weeks[k] = getWeekTasks(k).filter(t=>t.id!==id);
+    saveState(); render();
+  }
+
+  // ---------- Helpers ----------
+  function uid(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); }
+  function sortTasks(arr){
+    arr.sort((a,b)=>{
+      if(a.day!==b.day) return a.day-b.day;
+      const aa = (a.start||'24:00');
+      const bb = (b.start||'24:00');
+      return aa.localeCompare(bb);
+    });
+  }
+  function isSunday(d = currentSunday){
+    const now = new Date();
+    const sameWeekSunday = startOfWeek(now);
+    return fmtDate(startOfWeek(d))===fmtDate(sameWeekSunday) && now.getDay()===0;
+  }
+
+  // ---------- Render ----------
+  function render(){
+    const wk = weekKey(currentSunday);
+    const endSat = addDays(currentSunday,6);
+    weekLabel.textContent = `${fmtHuman(currentSunday)} → ${fmtHuman(endSat)}`;
+    sundayStamp.textContent = `Domingo: ${fmtDate(currentSunday)}`;
+
+    while(weekGrid.firstChild) weekGrid.removeChild(weekGrid.firstChild);
+    
+    const tasks = [...getWeekTasks()];
+    sortTasks(tasks);
+
+    const today = new Date();
+    const todayDay = today.getDay();
+    const isCurrentWeek = weekKey(today) === wk;
+
+    for(let d=0; d<7; d++){
+      const node = dayColTpl.content.firstElementChild.cloneNode(true);
+      node.querySelector('h3').textContent = dayNames[d];
+      node.querySelector('span').textContent = fmtHuman(addDays(currentSunday,d));
+      
+      if (isCurrentWeek && d === todayDay) {
+        node.classList.add('current-day');
+      }
+      
+      const dropzone = node.querySelector('[data-dropzone]');
+      dropzone.dataset.day = d;
+      setDropHandlers(dropzone);
+
+      tasks.filter(t=>t.day===d).forEach(task=>{
+        dropzone.appendChild(renderTask(task));
+      });
+      weekGrid.appendChild(node);
+    }
+
+    statTotal.textContent = tasks.length;
+    statDone.textContent = tasks.filter(t=>t.done).length;
+
+    perDayStats.innerHTML = '';
+    const dayAbrevs = ['D','S','T','Q','Q','S','S'];
+    for(let d=0; d<7; d++){
+      const n = tasks.filter(t=>t.day===d).length;
+      const el = document.createElement('div');
+      el.className = "bg-black/30 rounded-lg p-2 text-center";
+      el.innerHTML = `<div class="text-zinc-400">${dayAbrevs[d]}</div><div class="font-semibold">${n}</div>`;
+      perDayStats.appendChild(el);
+    }
+
+    const disableSundayButtons = !isSunday(currentSunday);
+    generateFromTemplateBtn.disabled = disableSundayButtons;
+    copyCarryBtn.disabled = disableSundayButtons;
+  }
+
+  function renderTask(t){
+    const card = taskCardTpl.content.firstElementChild.cloneNode(true);
+    card.dataset.id = t.id;
+
+    card.classList.remove('pri-alta','pri-media','pri-baixa');
+    const priority = (t.priority||'Média').toLowerCase();
+    if(priority==='alta') card.classList.add('pri-alta');
+    else if(priority==='baixa') card.classList.add('pri-baixa');
+    else card.classList.add('pri-media');
+
+    card.querySelector('[data-title]').textContent = t.title;
+    card.querySelector('[data-label]').textContent = t.label || 'Geral';
+    const timeTxt = (t.start||'') + (t.end ? ('–'+t.end) : '');
+    card.querySelector('[data-time]').textContent = timeTxt.trim() || 'Dia todo';
+    card.querySelector('[data-notes]').textContent = t.notes || '';
+
+    const doneCb = card.querySelector('[data-done]');
+    doneCb.checked = !!t.done;
+    doneCb.onchange = () => updateTask(t.id, { done: doneCb.checked });
+
+    card.querySelector('[data-edit]').onclick = () => {
+      eId.value = t.id;
+      eTitle.value = t.title;
+      eDay.value = String(t.day);
+      eStart.value = t.start || '';
+      eEnd.value = t.end || '';
+      eLabel.value = t.label || '';
+      ePriority.value = t.priority || 'Média';
+      eNotes.value = t.notes || '';
+      openModal();
+    };
+
+    card.querySelector('[data-delete]').onclick = () => {
+      if(confirm("Excluir esta tarefa?")) deleteTask(t.id);
+    };
+
+    setDragHandlers(card);
+    return card;
+  }
+
+  // ---------- Drag & Drop ----------
+  let draggingId = null;
+  function setDragHandlers(card){
+    card.addEventListener('dragstart', e=>{
+      draggingId = card.dataset.id;
+      e.dataTransfer.setData('text/plain', draggingId);
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(()=> card.classList.add('opacity-50'), 0);
+    });
+    card.addEventListener('dragend', ()=>{
+      draggingId = null;
+      card.classList.remove('opacity-50');
+      document.querySelectorAll('[data-dropzone]').forEach(z=>z.classList.remove('drop-target'));
+    });
+  }
+  function setDropHandlers(zone){
+    zone.addEventListener('dragover', e=>{
+      e.preventDefault();
+      zone.classList.add('drop-target');
+    });
+    zone.addEventListener('dragleave', ()=>{
+      zone.classList.remove('drop-target');
+    });
+    zone.addEventListener('drop', e=>{
+      e.preventDefault();
+      zone.classList.remove('drop-target');
+      const id = e.dataTransfer.getData('text/plain') || draggingId;
+      if(!id) return;
+      const arr = getWeekTasks();
+      const idx = arr.findIndex(t=>t.id===id);
+      if(idx<0) return;
+      arr[idx].day = parseInt(zone.dataset.day,10);
+      saveState();
+      render();
+    });
+  }
+
+  // ---------- Form ----------
+  taskForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const t = {
+      id: uid(),
+      title: fTitle.value.trim(),
+      day: parseInt(fDay.value,10),
+      start: fStart.value || '',
+      end: fEnd.value || '',
+      label: fLabel.value.trim(),
+      priority: fPriority.value,
+      notes: fNotes.value.trim(),
+      done: false
+    };
+    if(!t.title){ fTitle.focus(); return; }
+    addTask(t);
+    if(fTemplate.checked){
+      state.template.push({...t, done:false});
+      saveState();
+    }
+    taskForm.reset();
+    fDay.value = (new Date().getDay()).toString();
+  });
+
+  editForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const id = eId.value;
+    const patch = {
+      title: eTitle.value.trim(),
+      day: parseInt(eDay.value,10),
+      start: eStart.value || '',
+      end: eEnd.value || '',
+      label: eLabel.value.trim(),
+      priority: ePriority.value,
+      notes: eNotes.value.trim()
+    };
+    if(!patch.title){ eTitle.focus(); return; }
+    updateTask(id, patch);
+    closeModal();
+  });
+
+
+  // ---------- Rotinas de domingo ----------
+  generateFromTemplateBtn.onclick = ()=>{
+    if(confirm('Gerar a semana a partir do Template? (não apaga o que já existe)')){
+      const target = getWeekTasks();
+      const clones = state.template.map(t=> ({...t, id: uid(), done:false}));
+      target.push(...clones);
+      saveState(); render();
+    }
+  };
+
+  copyCarryBtn.onclick = ()=>{
+    const prev = addDays(currentSunday,-7);
+    const prevKey = weekKey(prev);
+    const prevTasks = state.weeks[prevKey]||[];
+    const pendentes = prevTasks.filter(t=>!t.done).map(t=> ({...t, id: uid()}));
+    if(!pendentes.length){ alert('Não há pendentes na semana anterior.'); return; }
+    if(confirm(`Trazer ${pendentes.length} pendente(s) da semana anterior?`)){
+      const target = getWeekTasks();
+      target.push(...pendentes);
+      saveState(); render();
+    }
+  };
+
+  // ---------- Backup ----------
+  exportBtn.onclick = ()=>{
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'planner-semanal-backup.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  };
+  importFile.onchange = (e)=>{
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const data = JSON.parse(reader.result);
+        if(!data || typeof data!=='object') throw new Error('JSON inválido');
+        state.template = data.template ?? state.template ?? [];
+        state.weeks = {...state.weeks, ...(data.weeks||{})};
+        saveState(); render();
+        alert('Importado com sucesso!');
+      }catch(err){
+        alert('Falha ao importar: '+ err.message);
+      }finally{
+        importFile.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // ---------- Limpar semana ----------
+  clearWeekBtn.onclick = ()=>{
+    if(confirm('Apagar todas as tarefas desta semana?')){
+      state.weeks[weekKey(currentSunday)] = [];
+      saveState(); render();
+    }
+  };
+
+  // ---------- Boot ----------
+  fDay.value = (new Date().getDay()).toString();
+  render();
+</script>
+</body>
+</html>
