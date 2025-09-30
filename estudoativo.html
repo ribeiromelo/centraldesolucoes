@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Integrado de Tarefas e Revisões</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #111827; /* Cor de fundo base */
+        }
+        
+        ::selection {
+            background-color: #ef4444; /* red-500 */
+            color: #ffffff;
+        }
+
+        .title-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(to right, #ef4444, #f43f5e); /* red-500 to rose-500 */
+            text-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+        }
+        
+        .glass-effect {
+            background: linear-gradient(135deg, rgba(30, 20, 20, 0.2), rgba(30, 20, 20, 0.1));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        .task-item, .topic-item {
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, rgba(40, 29, 29, 0.5), rgba(30, 22, 22, 0.5));
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .task-item:hover, .topic-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #ef4444, #f43f5e); /* red-500 to rose-500 */
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.25);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.35);
+        }
+        
+        .section-title {
+            position: relative;
+            padding-left: 1.5rem;
+        }
+        
+        .section-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 1.25rem;
+            width: 0.35rem;
+            border-radius: 1rem;
+        }
+        
+        .today-title::before {
+            background: linear-gradient(to bottom, #ef4444, #dc2626); /* red-500 to red-600 */
+        }
+        
+        .upcoming-title::before {
+            background: linear-gradient(to bottom, #3b82f6, #0ea5e9);
+        }
+        
+        .done-title::before {
+            background: linear-gradient(to bottom, #10b981, #22c55e);
+        }
+        
+        .calendar-title::before {
+            background: linear-gradient(to bottom, #f97316, #ea580c); /* orange-500 to orange-600 */
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #fca5a5; /* red-300 */
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(to right, #ef4444, #f43f5e);
+            transition: width 0.5s ease;
+        }
+        
+        .calendar-day {
+            transition: all 0.3s ease;
+        }
+        
+        .calendar-day:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .motivation-pulse {
+            animation: motivationPulse 3s infinite ease-in-out;
+        }
+        
+        @keyframes motivationPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+            
+            70% {
+                transform: scale(1.01);
+                box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+            }
+            
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 bg-gradient-to-br from-gray-900 via-red-950 to-gray-900 min-h-screen p-4 lg:p-8" style="background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 38, 38, 0.15), transparent), linear-gradient(to right bottom, rgb(17, 24, 39), rgb(55, 22, 22), rgb(17, 24, 39));">
+
+    <div class="max-w-8xl mx-auto">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold title-gradient mb-2">Sistema Integrado de Produtividade</h1>
+            <p class="text-gray-400 text-lg">Gerencie suas tarefas e revisões em um só lugar.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="glass-effect rounded-2xl p-6">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl font-bold title-gradient mb-2">📋 Tarefas Semanais</h2>
+                    <p class="text-gray-400">Organize suas tarefas de forma eficiente</p>
+                </div>
+
+                <!-- BLOCO DE CRIAÇÃO + PRAZO DAS TAREFAS -->
+                <div class="flex flex-col gap-3 mb-6">
+                  <!-- Barra de prazo -->
+                  <div class="flex items-center justify-between bg-gray-800/60 border border-gray-700 rounded-xl p-3">
+                    <div class="flex items-center gap-2">
+                      <i class="fa-regular fa-calendar text-red-400"></i>
+                      <span class="text-sm text-gray-300">Finalizar tarefas até</span>
+                      <strong id="deadlineLabel" class="text-white"></strong>
+                      <span id="deadlineLeftBadge" class="ml-2 text-xs px-2 py-0.5 rounded-full bg-red-900/40 text-red-300"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <input id="deadlineInput" type="date"
+                        class="p-2 rounded-lg bg-gray-900/60 text-gray-200 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                      <button onclick="saveDeadline()"
+                        class="px-3 py-2 btn-primary rounded-lg text-white text-sm font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Salvar
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Linha de input de tarefas -->
+                  <div class="flex">
+                    <input id="taskInput" type="text" placeholder="Adicionar nova tarefa..."
+                      class="flex-grow p-4 rounded-l-xl bg-gray-800/60 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 border border-gray-700 focus:border-red-500 transition">
+                    <button onclick="addTask()" 
+                      class="px-5 btn-primary rounded-r-xl text-white font-bold text-xl flex items-center justify-center">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm text-gray-400 mb-1">
+                        <span>Progresso</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="h-2 rounded-full bg-gray-700/50 overflow-hidden">
+                        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <ul id="taskList" class="space-y-3 mb-6 max-h-80 overflow-y-auto pr-2"></ul>
+
+                <div class="text-center mt-6">
+                    <button onclick="clearTasks()" 
+                        class="px-5 py-3 bg-red-800 hover:bg-red-700 rounded-xl text-white font-bold flex items-center justify-center gap-2 mx-auto transition-transform hover:scale-105">
+                        <i class="fas fa-trash"></i> Limpar tudo
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-effect rounded-2xl p-8 flex flex-col justify-center items-center text-center motivation-pulse">
+                <div class="mb-6">
+                    <i class="fas fa-rocket text-5xl text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400 mb-4"></i>
+                    <h2 class="text-3xl font-bold text-white mb-2">🚀 Mantenha-se Motivado!</h2>
+                    <p class="text-gray-300">Uma nova frase a cada 7 segundos</p>
+                </div>
+                
+                <div class="bg-gray-800/30 p-6 rounded-2xl border border-gray-700/30 w-full max-w-md">
+                    <p id="motivationalQuote" class="text-xl font-semibold text-white transition-opacity duration-500 ease-in-out">
+                        "Acredite em você e tudo será possível."
+                    </p>
+                </div>
+                
+                <div class="mt-8 flex space-x-2">
+                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-effect rounded-2xl p-6 md:p-8 mb-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold title-gradient mb-2">📅 Sistema de Revisões</h2>
+                <p class="text-gray-400">Organize seus estudos com o sistema de repetição espaçada</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row mb-6 gap-3">
+                <input id="topicInput" type="text" placeholder="Adicionar novo assunto..."
+                    class="flex-grow p-4 rounded-xl bg-gray-800/60 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 border border-gray-700 focus:border-red-500 transition">
+                <button onclick="addTopic()" 
+                    class="px-6 py-4 btn-primary rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2" aria-label="Adicionar novo assunto">
+                    <i class="fas fa-plus"></i> Adicionar
+                </button>
+            </div>
+
+            <p id="feedbackMessage" class="text-center text-sm mb-6 py-2 rounded-lg"></p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-800/30 rounded-2xl p-5 border border-gray-700/30">
+                    <h2 class="text-xl font-bold text-white mb-4 section-title today-title"><i class="fas fa-bell text-red-400 mr-2"></i> Revisões de Hoje</h2>
+                    <ul id="todayList" class="space-y-3"></ul>
+                </div>
+                
+                <div class="bg-gray-800/30 rounded-2xl p-5 border border-gray-700/30">
+                    <h2 class="text-xl font-bold text-white mb-4 section-title upcoming-title"><i class="fas fa-calendar-alt text-blue-400 mr-2"></i> Próximas Revisões</h2>
+                    <ul id="upcomingList" class="space-y-3"></ul>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/30 rounded-2xl p-5 border border-gray-700/30 mb-8">
+                <h2 class="text-xl font-bold text-white mb-4 section-title done-title"><i class="fas fa-check-circle text-green-400 mr-2"></i> Concluídas</h2>
+                <ul id="doneList" class="space-y-3"></ul>
+            </div>
+
+            <div class="glass-effect rounded-2xl p-5 border border-gray-700/30">
+                <h2 class="text-xl font-bold text-white mb-4 section-title calendar-title"><i class="fas fa-calendar-day text-orange-400 mr-2"></i> Calendário de Revisões</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <button onclick="changeMonth(-1)" class="text-lg text-gray-400 hover:text-white transition p-2 rounded-lg bg-gray-800/50 hover:scale-110"><i class="fas fa-chevron-left"></i></button>
+                    <h3 id="currentMonth" class="text-lg font-semibold text-white px-4 py-2 bg-gray-800/50 rounded-lg"></h3>
+                    <button onclick="changeMonth(1)" class="text-lg text-gray-400 hover:text-white transition p-2 rounded-lg bg-gray-800/50 hover:scale-110"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="grid grid-cols-7 gap-2 text-center mb-3 font-bold text-gray-400 text-sm">
+                    <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                </div>
+                <div id="calendar" class="grid grid-cols-7 gap-2 text-center mb-4"></div>
+
+                <div id="dayDetails" class="bg-gray-800/70 p-4 rounded-xl border border-gray-700/50 mt-4 fade-in hidden">
+                    <h3 class="text-lg font-bold text-red-300 mb-3 flex items-center"><i class="fas fa-list-check mr-2"></i> Revisões do dia</h3>
+                    <ul id="dayRevisions" class="space-y-2"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== SISTEMA DE TAREFAS =====
+        const taskInput = document.getElementById("taskInput");
+        const taskList = document.getElementById("taskList");
+        const motivationalQuoteElement = document.getElementById("motivationalQuote");
+        const progressText = document.getElementById("progressText");
+        const progressFill = document.getElementById("progressFill");
+
+        const motivationalQuotes = [
+            "Acredite em você e tudo será possível.",
+            "O único lugar onde o sucesso vem antes do trabalho é no dicionário.",
+            "Não espere por oportunidades, crie-as.",
+            "O futuro pertence àqueles que acreditam na beleza de seus sonhos.",
+            "A persistência é o caminho do êxito.",
+            "Cada dia é uma nova chance para mudar sua vida.",
+            "Seja a mudança que você deseja ver no mundo.",
+            "Grandes coisas nunca vêm de zonas de conforto.",
+            "Comece onde você está, use o que você tem, faça o que você pode.",
+            "Nunca é tarde demais para ser quem você poderia ter sido."
+        ];
+
+        let currentQuoteIndex = 0;
+
+        // ===== PRAZO (DEADLINE) DAS TAREFAS =====
+        const deadlineLabel = document.getElementById("deadlineLabel");
+        const deadlineInput = document.getElementById("deadlineInput");
+        const deadlineLeftBadge = document.getElementById("deadlineLeftBadge");
+
+        function toInputDate(d) {
+          // retorna 'YYYY-MM-DD' no fuso local
+          const tzOff = d.getTimezoneOffset();
+          const local = new Date(d.getTime() - tzOff * 60 * 1000);
+          return local.toISOString().split("T")[0];
+        }
+
+        function nextSunday(fromDate = new Date()) {
+          // define domingo como fim da semana
+          const d = new Date(fromDate);
+          const day = d.getDay();          // 0=Dom, 6=Sáb
+          const diff = (7 - day) % 7 || 7; // próximo domingo; se já é domingo, vai para o próximo
+          d.setDate(d.getDate() + diff);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        }
+
+        function loadDeadline() {
+          const saved = localStorage.getItem("tasksDeadline");
+          const deadline = saved ? new Date(saved) : nextSunday();
+          // guarda no storage se não existia
+          if (!saved) localStorage.setItem("tasksDeadline", deadline.toISOString());
+
+          deadlineInput.value = toInputDate(deadline);
+          updateDeadlineUI(deadline);
+        }
+
+        function saveDeadline() {
+          const val = deadlineInput.value;
+          if (!val) return;
+          const d = new Date(val + "T00:00:00");
+          localStorage.setItem("tasksDeadline", d.toISOString());
+          updateDeadlineUI(d);
+          // feedback sutil
+          deadlineLeftBadge.classList.add("ring-2","ring-red-400");
+          setTimeout(() => deadlineLeftBadge.classList.remove("ring-2","ring-red-400"), 600);
+        }
+
+        function updateDeadlineUI(deadlineDate) {
+          const opts = { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' };
+          deadlineLabel.textContent = deadlineDate.toLocaleDateString('pt-BR', opts).replace(/\./g, '');
+
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const msLeft = deadlineDate - today;
+          const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+
+          if (isNaN(daysLeft)) {
+            deadlineLeftBadge.textContent = "";
+            return;
+          }
+
+          if (daysLeft > 1) {
+            deadlineLeftBadge.textContent = `faltam ${daysLeft} dias`;
+            deadlineLeftBadge.className = "ml-2 text-xs px-2 py-0.5 rounded-full bg-red-900/40 text-red-300";
+          } else if (daysLeft === 1) {
+            deadlineLeftBadge.textContent = "vence amanhã";
+            deadlineLeftBadge.className = "ml-2 text-xs px-2 py-0.5 rounded-full bg-orange-900/40 text-orange-300";
+          } else if (daysLeft === 0) {
+            deadlineLeftBadge.textContent = "vence hoje";
+            deadlineLeftBadge.className = "ml-2 text-xs px-2 py-0.5 rounded-full bg-yellow-900/40 text-yellow-300";
+          } else {
+            deadlineLeftBadge.textContent = "prazo vencido";
+            deadlineLeftBadge.className = "ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-300";
+          }
+        }
+
+        // ===== SISTEMA DE REVISÕES =====
+        const topicInput = document.getElementById("topicInput");
+        const feedbackMessage = document.getElementById("feedbackMessage");
+        const todayList = document.getElementById("todayList");
+        const upcomingList = document.getElementById("upcomingList");
+        const doneList = document.getElementById("doneList");
+        const calendarEl = document.getElementById("calendar");
+        const currentMonthEl = document.getElementById("currentMonth");
+        const dayDetailsEl = document.getElementById("dayDetails");
+        const dayRevisionsEl = document.getElementById("dayRevisions");
+
+        const intervals = [1, 3, 7, 15, 30];
+        let currentMonth = new Date();
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Inicializar sistemas
+            loadTasks();
+            startMotivationalSlideshow();
+            updateProgress();
+            
+            // NOVO: carregar prazo das tarefas
+            loadDeadline();
+
+            loadTopics();
+            renderCalendar();
+        });
+
+        // ===== FUNÇÕES DO SISTEMA DE TAREFAS =====
+        function addTask() {
+            const text = taskInput.value.trim();
+            if (text === "") return;
+
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            tasks.push({ text, done: false });
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+
+            taskInput.value = "";
+            loadTasks();
+            updateProgress();
+        }
+
+        function renderTask(task, index) {
+            const li = document.createElement("li");
+            li.className = "task-item rounded-xl px-4 py-3 fade-in flex items-center justify-between";
+
+            const content = document.createElement("div");
+            content.className = "flex items-center flex-grow";
+            
+            const checkBtn = document.createElement("button");
+            checkBtn.innerHTML = task.done ? 
+                '<i class="fas fa-check-circle text-green-400"></i>' : 
+                '<i class="far fa-circle text-gray-400"></i>';
+            checkBtn.className = "text-xl transition-transform hover:scale-125 mr-4";
+            checkBtn.onclick = () => toggleTask(index);
+
+            const span = document.createElement("span");
+            span.textContent = task.text;
+            span.className = "flex-grow cursor-pointer text-base " + 
+                (task.done ? "line-through text-gray-500" : "text-gray-200");
+            span.onclick = () => toggleTask(index);
+
+            content.appendChild(checkBtn);
+            content.appendChild(span);
+
+            const delBtn = document.createElement("button");
+            delBtn.innerHTML = '<i class="fas fa-trash text-red-500 hover:text-red-400"></i>';
+            delBtn.className = "text-lg transition-transform hover:scale-125 ml-3";
+            delBtn.onclick = () => deleteTask(index);
+
+            li.appendChild(content);
+            li.appendChild(delBtn);
+            taskList.appendChild(li);
+        }
+
+        function loadTasks() {
+            taskList.innerHTML = "";
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            tasks.forEach((task, i) => renderTask(task, i));
+        }
+
+        function toggleTask(index) {
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            tasks[index].done = !tasks[index].done;
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            loadTasks();
+            updateProgress();
+        }
+
+        function deleteTask(index) {
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            tasks.splice(index, 1);
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            loadTasks();
+            updateProgress();
+        }
+
+        function clearTasks() {
+            if (confirm("Tem certeza que deseja limpar todas as tarefas?")) {
+                localStorage.removeItem("tasks");
+                loadTasks();
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            if (tasks.length === 0) {
+                progressText.textContent = "0%";
+                progressFill.style.width = "0%";
+                return;
+            }
+            
+            const completedTasks = tasks.filter(task => task.done).length;
+            const progressPercentage = Math.round((completedTasks / tasks.length) * 100);
+            
+            progressText.textContent = `${progressPercentage}%`;
+            progressFill.style.width = `${progressPercentage}%`;
+        }
+
+        function showNextQuote() {
+            motivationalQuoteElement.style.opacity = '0';
+            setTimeout(() => {
+                currentQuoteIndex = (currentQuoteIndex + 1) % motivationalQuotes.length;
+                motivationalQuoteElement.textContent = `"${motivationalQuotes[currentQuoteIndex]}"`;
+                motivationalQuoteElement.style.opacity = '1';
+            }, 500);
+        }
+
+        function startMotivationalSlideshow() {
+            motivationalQuoteElement.textContent = `"${motivationalQuotes[currentQuoteIndex]}"`;
+            setInterval(showNextQuote, 7000);
+        }
+
+        // ===== FUNÇÕES DO SISTEMA DE REVISÕES =====
+        function addTopic() {
+            const text = topicInput.value.trim();
+            if (text === "") {
+                showFeedback("Por favor, digite um assunto.");
+                return;
+            }
+
+            let topics = JSON.parse(localStorage.getItem("revisions")) || [];
+            const now = new Date();
+            
+            topics.push({
+                id: crypto.randomUUID(),
+                text,
+                stage: 0,
+                nextReview: addDays(now, intervals[0])
+            });
+
+            localStorage.setItem("revisions", JSON.stringify(topics));
+            topicInput.value = "";
+            loadTopics();
+            renderCalendar();
+            showFeedback(`"${text}" adicionado com sucesso!`, 'bg-green-900/30 text-green-400');
+        }
+
+        function createTopicElement(topic) {
+            const li = document.createElement("li");
+            li.className = "topic-item rounded-xl px-4 py-3 fade-in";
+
+            const content = document.createElement("div");
+            content.className = "flex flex-col";
+            
+            const textSpan = document.createElement("span");
+            textSpan.textContent = topic.text;
+            textSpan.className = "text-gray-200 font-medium mb-1";
+            content.appendChild(textSpan);
+
+            const metaDiv = document.createElement("div");
+            metaDiv.className = "flex flex-wrap gap-2";
+            
+            const stageSpan = document.createElement("span");
+            stageSpan.textContent = `Etapa ${topic.stage + 1}/${intervals.length}`;
+            stageSpan.className = "text-xs px-2 py-1 rounded-full bg-red-900/50 text-red-300";
+            metaDiv.appendChild(stageSpan);
+
+            if (topic.stage < intervals.length) {
+                const dateSpan = document.createElement("span");
+                const nextReviewDate = new Date(topic.nextReview);
+                const formattedDate = nextReviewDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+                dateSpan.textContent = `Próxima: ${formattedDate}`;
+                dateSpan.className = "text-xs px-2 py-1 rounded-full bg-blue-900/50 text-blue-300";
+                metaDiv.appendChild(dateSpan);
+            }
+
+            content.appendChild(metaDiv);
+            li.appendChild(content);
+
+            const buttonsDiv = document.createElement("div");
+            buttonsDiv.className = "flex space-x-2 mt-3";
+
+            const isToday = new Date(topic.nextReview).toISOString().split("T")[0] <= new Date().toISOString().split("T")[0];
+            const isDone = topic.stage >= intervals.length;
+
+            if (isToday && !isDone) {
+                const reviewBtn = document.createElement("button");
+                reviewBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Revisar';
+                reviewBtn.className = "px-3 py-1 bg-green-700 hover:bg-green-600 rounded-lg text-white text-xs font-bold transition flex items-center hover:scale-105";
+                reviewBtn.onclick = () => markReviewed(topic.id);
+                buttonsDiv.appendChild(reviewBtn);
+            }
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.innerHTML = '<i class="fas fa-trash mr-1"></i> Excluir';
+            deleteBtn.className = "px-3 py-1 bg-red-800 hover:bg-red-700 rounded-lg text-white text-xs font-bold transition flex items-center hover:scale-105";
+            deleteBtn.onclick = () => deleteTopic(topic.id);
+            buttonsDiv.appendChild(deleteBtn);
+
+            li.appendChild(buttonsDiv);
+            return li;
+        }
+
+        function renderListWithContent(listEl, topics, emptyMessage) {
+            listEl.innerHTML = "";
+            if (topics.length === 0) {
+                const li = document.createElement("li");
+                li.textContent = emptyMessage;
+                li.className = "text-gray-500 italic text-center py-6 bg-gray-800/20 rounded-xl";
+                listEl.appendChild(li);
+            } else {
+                topics.forEach(topic => {
+                    listEl.appendChild(createTopicElement(topic));
+                });
+            }
+        }
+
+        function loadTopics() {
+            const topics = JSON.parse(localStorage.getItem("revisions")) || [];
+            const today = new Date().toISOString().split("T")[0];
+
+            const todayTopics = topics.filter(t => t.stage < intervals.length && new Date(t.nextReview).toISOString().split("T")[0] <= today);
+            const upcomingTopics = topics.filter(t => t.stage < intervals.length && new Date(t.nextReview).toISOString().split("T")[0] > today);
+            const doneTopics = topics.filter(t => t.stage >= intervals.length);
+
+            renderListWithContent(todayList, todayTopics, "🎉 Nenhuma revisão para hoje! 🎉");
+            renderListWithContent(upcomingList, upcomingTopics, "Nenhuma revisão programada.");
+            renderListWithContent(doneList, doneTopics, "Nenhuma revisão concluída.");
+        }
+
+        function markReviewed(id) {
+            let topics = JSON.parse(localStorage.getItem("revisions")) || [];
+            let topic = topics.find(t => t.id === id);
+
+            if (topic) {
+                topic.stage++;
+                if (topic.stage < intervals.length) {
+                    topic.nextReview = addDays(new Date(), intervals[topic.stage]);
+                }
+            }
+
+            localStorage.setItem("revisions", JSON.stringify(topics));
+            loadTopics();
+            renderCalendar();
+        }
+
+        function deleteTopic(id) {
+            let topics = JSON.parse(localStorage.getItem("revisions")) || [];
+            topics = topics.filter(t => t.id !== id);
+            localStorage.setItem("revisions", JSON.stringify(topics));
+            loadTopics();
+            renderCalendar();
+            showFeedback("Assunto excluído.", "bg-red-900/30 text-red-400");
+        }
+
+        function showFeedback(message, colorClass = 'bg-red-900/30 text-red-400') {
+            feedbackMessage.textContent = message;
+            feedbackMessage.className = `text-center text-sm mb-6 py-2 rounded-lg transition-opacity duration-300 ${colorClass}`;
+            setTimeout(() => {
+                feedbackMessage.textContent = "";
+                feedbackMessage.className = "";
+            }, 3000);
+        }
+
+        function addDays(date, days) {
+            let result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        // ---- Calendário ----
+        function renderCalendar() {
+            calendarEl.innerHTML = "";
+            const today = new Date();
+            
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+
+            currentMonthEl.textContent = currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            const startDayOfWeek = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+
+            let topics = JSON.parse(localStorage.getItem("revisions")) || [];
+            let reviewDates = {};
+            topics.forEach(t => {
+                if (t.stage < intervals.length) {
+                    const d = new Date(t.nextReview);
+                    if (d.getMonth() === month && d.getFullYear() === year) {
+                        const key = d.getDate();
+                        if (!reviewDates[key]) reviewDates[key] = [];
+                        reviewDates[key].push(t);
+                    }
+                }
+            });
+
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const empty = document.createElement("div");
+                calendarEl.appendChild(empty);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const div = document.createElement("div");
+                div.className = "calendar-day h-14 flex flex-col justify-center items-center rounded-xl text-sm cursor-pointer relative";
+
+                if (reviewDates[day] && reviewDates[day].length > 0) {
+                    div.className += " bg-gradient-to-br from-red-600 to-rose-500 text-white font-bold hover:from-red-700 hover:to-rose-600";
+                    const dot = document.createElement("div");
+                    dot.className = "pulse-dot";
+                    div.appendChild(dot);
+                } else {
+                    div.className += " bg-gray-800/50 text-gray-400 hover:bg-gray-700/50";
+                }
+
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    div.className += " ring-2 ring-red-400";
+                }
+
+                div.textContent = day;
+                div.onclick = () => showDayRevisions(day, month, year, reviewDates[day] || []);
+                calendarEl.appendChild(div);
+            }
+        }
+        
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+            dayDetailsEl.classList.add("hidden");
+        }
+
+        function showDayRevisions(day, month, year, revisions) {
+            dayRevisionsEl.innerHTML = "";
+            dayDetailsEl.classList.remove("hidden");
+            
+            const selectedDate = new Date(year, month, day);
+            document.querySelector("#dayDetails h3").innerHTML = `<i class="fas fa-list-check mr-2"></i> Revisões para ${selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+
+            if (revisions.length === 0) {
+                const li = document.createElement("li");
+                li.textContent = "Nenhuma revisão programada para este dia.";
+                li.className = "text-gray-400 italic text-center py-3";
+                dayRevisionsEl.appendChild(li);
+            } else {
+                revisions.forEach(topic => {
+                    const li = document.createElement("li");
+                    li.className = "flex justify-between items-center bg-gray-700/50 px-4 py-2 rounded-lg";
+                    li.innerHTML = `
+                        <span class="text-gray-200">${topic.text}</span>
+                        ${new Date(topic.nextReview).toISOString().split("T")[0] <= new Date().toISOString().split("T")[0] ?
+                        `<button onclick="markReviewed('${topic.id}')" class="px-3 py-1 bg-green-700 hover:bg-green-600 rounded-lg text-white text-xs flex items-center transition-transform hover:scale-105">
+                            <i class="fas fa-check mr-1"></i> Revisar
+                        </button>` : ''
+                        }
+                    `;
+                    dayRevisionsEl.appendChild(li);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

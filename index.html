@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Soluções - By Erique Melo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #111827;
+        }
+        
+        ::selection {
+            background-color: #ef4444; /* red-500 */
+            color: #ffffff;
+        }
+
+        .title-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(to right, #ef4444, #f43f5e); /* red-500 to rose-500 */
+            text-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+        }
+        
+        .glass-effect {
+            background: linear-gradient(135deg, rgba(30, 20, 20, 0.2), rgba(30, 20, 20, 0.1));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease;
+        }
+
+        .card-link:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 min-h-screen p-4 sm:p-8 flex items-center justify-center" style="background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(220, 38, 38, 0.15), transparent), linear-gradient(to right bottom, rgb(17, 24, 39), rgb(55, 22, 22), rgb(17, 24, 39));">
+
+    <div class="max-w-7xl mx-auto w-full">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold title-gradient mb-2">🚀 Central de Soluções</h1>
+            <p class="text-gray-400 text-lg">Acesse suas ferramentas de produtividade e estudos.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            
+            <a href="#" class="glass-effect card-link rounded-2xl p-8 text-center flex flex-col items-center">
+                <i class="fas fa-sticky-note text-5xl mb-4 title-gradient"></i>
+                <h2 class="text-2xl font-bold text-white mb-2">Notepad</h2>
+                <p class="text-gray-400 text-sm">Organizador de resumos e anotações rápidas.</p>
+            </a>
+            
+            <a href="#" class="glass-effect card-link rounded-2xl p-8 text-center flex flex-col items-center">
+                <i class="fas fa-calendar-week text-5xl mb-4 title-gradient"></i>
+                <h2 class="text-2xl font-bold text-white mb-2">Planner Semanal</h2>
+                <p class="text-gray-400 text-sm">Planeje suas tarefas e compromissos da semana.</p>
+            </a>
+            
+            <a href="#" class="glass-effect card-link rounded-2xl p-8 text-center flex flex-col items-center">
+                <i class="fas fa-book-open text-5xl mb-4 title-gradient"></i>
+                <h2 class="text-2xl font-bold text-white mb-2">Controle de Revisões</h2>
+                <p class="text-gray-400 text-sm">Gerencie seus materiais de estudo e revisões espaçadas.</p>
+            </a>
+
+            <a href="#" class="glass-effect card-link rounded-2xl p-8 text-center flex flex-col items-center">
+                <i class="fas fa-bullseye text-5xl mb-4 title-gradient"></i>
+                <h2 class="text-2xl font-bold text-white mb-2">Painel do R0</h2>
+                <p class="text-gray-400 text-sm">Acompanhe seu progresso e controle de questões.</p>
+            </a>
+
+        </div>
+
+        <div class="text-center mt-12">
+            <button id="open-modal-btn" class="text-red-400 hover:text-red-300 transition-colors duration-300 hover:underline">
+                <i class="fas fa-info-circle mr-1"></i> Como seus dados são salvos?
+            </button>
+        </div>
+    </div>
+
+    <div id="info-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
+        <div class="glass-effect rounded-2xl p-8 max-w-2xl w-full relative fade-in">
+            <button id="close-modal-btn" class="absolute top-4 right-5 text-gray-400 hover:text-white text-2xl transition-transform hover:scale-110">
+                &times;
+            </button>
+
+            <h2 class="text-3xl font-bold title-gradient mb-6 text-center">🧠 Entendendo o Salvamento de Dados</h2>
+            
+            <p class="text-gray-300 mb-6">
+                Todas as informações que você adiciona nestas ferramentas (tarefas, notas, revisões) são salvas diretamente no seu navegador, usando uma tecnologia chamada <strong>LocalStorage</strong>. Isso significa que seus dados ficam guardados no seu próprio dispositivo, de forma privada e segura.
+            </p>
+
+            <h3 class="text-xl font-semibold text-white mb-3 flex items-center"><i class="fas fa-shield-halved text-red-400 mr-3"></i>Como Evitar a Perda de Dados</h3>
+            <p class="text-gray-400 mb-4">
+                Seus dados permanecem salvos a menos que uma das seguintes ações seja realizada:
+            </p>
+            
+            <ul class="space-y-3 text-gray-300 list-inside">
+                <li class="flex items-start">
+                    <i class="fas fa-broom text-red-400 mt-1 mr-3"></i>
+                    <span><strong>Limpeza manual de dados:</strong> A causa mais comum. Ao usar a opção "Limpar dados de navegação" e selecionar "Cookies e outros dados de site", o LocalStorage é apagado.</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-user-secret text-red-400 mt-1 mr-3"></i>
+                    <span><strong>Navegação anônima/privada:</strong> Dados salvos em uma janela anônima são excluídos assim que ela é fechada. Use sempre uma janela normal.</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-cogs text-red-400 mt-1 mr-3"></i>
+                    <span><strong>Softwares de limpeza (ex: CCleaner):</strong> Verifique as configurações desses programas para que não apaguem os "Dados de Site" do seu navegador.</span>
+                </li>
+            </ul>
+
+            <div class="mt-8 p-4 bg-red-900 bg-opacity-20 border border-red-500/30 rounded-lg text-center">
+                <p class="font-semibold text-red-300">
+                    <i class="fas fa-check-circle mr-1"></i> A boa notícia é que navegadores modernos como Chrome, Firefox e Edge <strong>não apagam seus dados sozinhos.</strong> A perda de dados quase sempre ocorre por uma das ações acima.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lógica para controlar o modal de informações
+        const openModalBtn = document.getElementById('open-modal-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const infoModal = document.getElementById('info-modal');
+
+        openModalBtn.addEventListener('click', () => {
+            infoModal.classList.remove('hidden');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            infoModal.classList.add('hidden');
+        });
+
+        // Fechar o modal ao clicar fora da área de conteúdo
+        infoModal.addEventListener('click', (event) => {
+            if (event.target === infoModal) {
+                infoModal.classList.add('hidden');
+            }
+        });
+    </script>
+
+</body>
+</html>
